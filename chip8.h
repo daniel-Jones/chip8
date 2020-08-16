@@ -2,9 +2,11 @@
 #define CHIP8_H
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #define WIDTH 64
 #define HEIGHT 32
