@@ -8,7 +8,7 @@ find_package(SDL2 REQUIRED)
 
 add_executable(
 	chip8
-	main.c)
+	main.c chip8.c chip8.h)
 
 target_compile_options(chip8 PRIVATE -Wall)
 

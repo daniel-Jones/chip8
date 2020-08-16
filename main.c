@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <SDL2/SDL.h>
 
-#define WIDTH 64
-#define HEIGHT 32
+#include "chip8.h"
 
 /* references
  * https://austinmorlan.com/posts/chip8_emulator/
@@ -21,6 +21,15 @@ void init_video();
 void update_video();
 void toggle_pixel(int x, int y);
 void quit();
+void usage(char *);
+
+extern uint32_t video[WIDTH*HEIGHT];
+
+void
+usage(char *program)
+{
+	printf("usage: %s [romfile]\n", program);
+}
 
 void
 quit()
@@ -40,8 +49,6 @@ init_video()
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
 }
-
-uint32_t video[WIDTH*HEIGHT];
 
 void
 update_video()
@@ -79,6 +86,20 @@ toggle_pixel(int x, int y)
 
 int main(int argc, char *argv[])
 {
+	if (argc < 2)
+	{
+		usage(argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	if (!load_rom(argv[1]))
+	{
+		fprintf(stderr, "cannot start interpreter\n");
+		exit(EXIT_FAILURE);
+	}
+
+	chip8_init();
+
 	init_video();
 
 	const int fps = 60;
@@ -101,5 +122,5 @@ int main(int argc, char *argv[])
 	}
 
 	quit();
-	return 0;
+	return EXIT_SUCCESS;
 }
