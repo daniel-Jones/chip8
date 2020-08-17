@@ -79,10 +79,17 @@ chip8_init()
 	{
 		memory[0x0 + i] = chip8_fontset[i];
 	}
+
+	uint8_t sinv[] = {0xBA, 0x7C, 0xD6, 0xFE, 0x54, 0xAA};
+	// temp
+	for (uint8_t i = 0; i < 6; i++)
+	{
+		memory[0x200+i] = sinv[i];
+	}
 }
 
 void
-chip8_draw_sprite(int startx, int starty, uint8_t mem, uint8_t size)
+chip8_draw_sprite(int startx, int starty, uint16_t mem, uint8_t size)
 {
 	/*
 	 * draw sprite located at loc of height size at startx,starty
@@ -90,7 +97,7 @@ chip8_draw_sprite(int startx, int starty, uint8_t mem, uint8_t size)
 
 	uint8_t byte = 0;
 	uint8_t mask = 0x1;
-	uint8_t destbit = 0x0;
+	V[0xF] = 0; /* set collision register to 0 */
 	for (uint8_t byteoffset = 0; byteoffset < size; byteoffset++)
 	{
 		/* loop through each byte from mem to mem+size */
@@ -98,21 +105,18 @@ chip8_draw_sprite(int startx, int starty, uint8_t mem, uint8_t size)
 		int bit = 0;
 		for (mask = 0x80; mask != 0; mask >>= 1)
 		{
-			if (byte&mask)
+			if (byte & mask)
 			{
-				destbit = 1;
-				video[WIDTH*starty+(startx+bit)] = 0xFFFFFF;
+				uint32_t pixel = WIDTH*(starty%HEIGHT)+((startx%WIDTH)+bit);
+				if (video[pixel] != 0)
+				{
+					/* if the video bit is already set, we need to set the collision register */
+					V[0xF] = 1;
+				}
+				video[pixel] ^= 0xFFFFFF;
 			}
-			else
-			{
-				destbit = 0;
-				video[WIDTH*starty+(startx+bit)] = 0x0;
-			}
-			printf("%d", destbit);
 			bit++;
 		}
 		starty++;
-		puts("");
 	}
-	puts("---");
 }

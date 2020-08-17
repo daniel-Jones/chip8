@@ -12,7 +12,7 @@
  * http://www.emulator101.com/chip-8-sprites.html
  */
 
-#define VIDEO_SCALE 10
+#define VIDEO_SCALE 5
 
 SDL_Window *window;
 SDL_Renderer *renderer;
@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
 	uint32_t frame_time;
 
 	int do_quit = 0;
+
 	chip8_draw_sprite(0, 0, 0xD*5, 0x5);
 	chip8_draw_sprite(5, 0, 0xE*5, 0x5);
 	chip8_draw_sprite(10, 0, 0xA*5, 0x5);
@@ -127,13 +128,21 @@ int main(int argc, char *argv[])
 	chip8_draw_sprite(30, 9, 0xE*5, 0x5);
 	chip8_draw_sprite(35, 9, 0xf*5, 0x5);
 
+	chip8_draw_sprite(0, 20, 0x200, 0x6);
+	chip8_draw_sprite(8, 20, 0x200, 0x6);
+	chip8_draw_sprite(16, 20, 0x200, 0x6);
+	chip8_draw_sprite(18, 20, 0x200, 0x6);
+
+	chip8_draw_sprite(61, 25, 0x200, 0x6);
+	chip8_draw_sprite(50, 30, 0x200, 0x6);
 
 	while(!do_quit)
 	{
 		frame_start = SDL_GetTicks();
 
 		// logic
-		update_video();
+		if (draw_flag)
+			update_video();
 
 		frame_time = SDL_GetTicks() - frame_start;
 		if (frame_delay > frame_time)
