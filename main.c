@@ -9,6 +9,7 @@
  * http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/
  * http://mattmik.com/files/chip8/mastering/chip8.html (lots of info)
  * http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#0.1
+ * http://www.emulator101.com/chip-8-sprites.html
  */
 
 #define VIDEO_SCALE 10
@@ -24,6 +25,7 @@ void quit();
 void usage(char *);
 
 extern uint32_t video[WIDTH*HEIGHT];
+extern int draw_flag;
 
 void
 usage(char *program)
@@ -54,7 +56,7 @@ void
 update_video()
 {
 	static int count = 0;
-	printf("frame %d\n", count++);
+	//printf("frame %d\n", count++);
 	/*
 	for (uint32_t i = 0 ;i < WIDTH*HEIGHT; i++)
 	{
@@ -66,7 +68,6 @@ update_video()
 	video[2] = (255<<16);
 	*/
 
-	toggle_pixel(0, 0);
 	SDL_UpdateTexture(texture, NULL, video, sizeof(video[0])*WIDTH);
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
@@ -106,7 +107,27 @@ int main(int argc, char *argv[])
 	const int frame_delay = 1000/fps;
 	uint32_t  frame_start;
 	uint32_t frame_time;
+
 	int do_quit = 0;
+	chip8_draw_sprite(0, 0, 0xD*5, 0x5);
+	chip8_draw_sprite(5, 0, 0xE*5, 0x5);
+	chip8_draw_sprite(10, 0, 0xA*5, 0x5);
+	chip8_draw_sprite(15, 0, 0xD*5, 0x5);
+	chip8_draw_sprite(20, 0, 0xB*5, 0x5);
+	chip8_draw_sprite(25, 0, 0xE*5, 0x5);
+	chip8_draw_sprite(30, 0, 0xE*5, 0x5);
+	chip8_draw_sprite(35, 0, 0xf*5, 0x5);
+
+	chip8_draw_sprite(0,  9, 0xD*5, 0x5);
+	chip8_draw_sprite(5,  9, 0xE*5, 0x5);
+	chip8_draw_sprite(10, 9, 0xA*5, 0x5);
+	chip8_draw_sprite(15, 9, 0xD*5, 0x5);
+	chip8_draw_sprite(20, 9, 0xB*5, 0x5);
+	chip8_draw_sprite(25, 9, 0xE*5, 0x5);
+	chip8_draw_sprite(30, 9, 0xE*5, 0x5);
+	chip8_draw_sprite(35, 9, 0xf*5, 0x5);
+
+
 	while(!do_quit)
 	{
 		frame_start = SDL_GetTicks();

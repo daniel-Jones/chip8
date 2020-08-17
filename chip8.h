@@ -13,9 +13,10 @@
 #define KEY_SIZE 15
 #define MEMORY_SIZE 4096
 #define STACK_SIZE 16
-#define MAX_ROM_SIZE 0x1000 - 0x200 // memory size - reseved memory
+#define MAX_ROM_SIZE 0x1000 - 0x200 // memory size - reserved memory
 
 int load_rom();
 void chip8_init();
+void chip8_draw_sprite(int startx, int starty, uint8_t mem, uint8_t size);
 
 #endif

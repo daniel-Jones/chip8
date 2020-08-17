@@ -71,7 +71,7 @@ chip8_init()
 	draw_flag = 1;		// draw by default i guess
 	delay_timer = 0;
 	sound_timer = 0;
-	srand(time(NULL));	// seed rng
+	srand(time(NULL));
 
 	/* load font into memory at 0x00: we have 0x00 to 0x1FF free for anything we want */
 	//TODO: add whole alphabet, then can write a rom to write strings or something
@@ -79,4 +79,40 @@ chip8_init()
 	{
 		memory[0x0 + i] = chip8_fontset[i];
 	}
+}
+
+void
+chip8_draw_sprite(int startx, int starty, uint8_t mem, uint8_t size)
+{
+	/*
+	 * draw sprite located at loc of height size at startx,starty
+	 */
+
+	uint8_t byte = 0;
+	uint8_t mask = 0x1;
+	uint8_t destbit = 0x0;
+	for (uint8_t byteoffset = 0; byteoffset < size; byteoffset++)
+	{
+		/* loop through each byte from mem to mem+size */
+		byte = memory[mem+byteoffset];
+		int bit = 0;
+		for (mask = 0x80; mask != 0; mask >>= 1)
+		{
+			if (byte&mask)
+			{
+				destbit = 1;
+				video[WIDTH*starty+(startx+bit)] = 0xFFFFFF;
+			}
+			else
+			{
+				destbit = 0;
+				video[WIDTH*starty+(startx+bit)] = 0x0;
+			}
+			printf("%d", destbit);
+			bit++;
+		}
+		starty++;
+		puts("");
+	}
+	puts("---");
 }
