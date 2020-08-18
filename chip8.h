@@ -25,5 +25,7 @@ int load_rom();
 void chip8_init();
 void chip8_draw_sprite(int startx, int starty, uint16_t mem, uint8_t size);
 void chip8_cycle();
+void chip8_beep();
+void unknown_opcode(uint16_t bad_opcode);
 
 #endif

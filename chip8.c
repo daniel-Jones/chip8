@@ -77,15 +77,17 @@ chip8_init()
 	//TODO: add whole alphabet, then can write a rom to write strings or something
 	for (uint8_t i = 0; i < FONT_BYTE_SIZE; i++)
 	{
-		memory[ + i] = chip8_fontset[i];
+		memory[0x0 + i] = chip8_fontset[i];
 	}
 
+	/*
 	uint8_t sinv[] = {0xBA, 0x7C, 0xD6, 0xFE, 0x54, 0xAA};
 	// temp
 	for (uint8_t i = 0; i <= FONT_WIDTH; i++)
 	{
 		memory[PROGRAM_START+i] = sinv[i];
 	}
+	*/
 }
 
 void
@@ -122,7 +124,75 @@ chip8_draw_sprite(int startx, int starty, uint16_t mem, uint8_t size)
 }
 
 void
+chip8_beep()
+{
+	// TODO: holy shit this is terrible, do something better
+	puts("\a");
+}
+
+void
+unknown_opcode(uint16_t bad_opcode)
+{
+	fprintf(stderr, "unknown opcode: 0x%02X at 0x%02X\n", bad_opcode, PC);
+}
+void
 chip8_cycle()
 {
+	/*
+	 * fetch, decode, execute
+	*/
 
+	/*
+	 * the opcode is a 2 byte value, while our memory is 1 byte
+	 * so to get our opcode we need to combine 2 bytes located at PC and PC+1
+	 * we right shift the first byte by 8 (1 byte) to place it in the high byte
+	 * and we store the second byte in the lower byte
+	 */
+	opcode = (memory[PC] << 8) | memory[PC+1];
+
+	uint16_t nnn = opcode & 0x0FFF; 	// lowest 12 bits
+	uint8_t n = opcode & 0x000F; 		// lowest 4 bits
+	uint8_t x = (opcode >> 8) & 0x000F;	// lower 4 bits of the high byte, we discard the low byte by right shifting it out
+	uint8_t y = (opcode >> 4) & 0x000F;	// upper 4 bits of the low byte, so we need to discard the lower 4 bits
+	uint8_t kk = opcode & 0x00FF;		// lowest 8 bits
+
+	switch (opcode & 0xF000)
+	{
+	/*
+	 * decode highest 4 bits
+	 * the highest 4 bits contains the instruction
+	 */
+	case 0x0000:
+	{
+		switch (kk)
+		{
+		case 0x00E0: /* cls (clear screen) */
+			puts("clear");
+			memset(video, 0, (WIDTH*HEIGHT) * sizeof(uint32_t));
+			draw_flag = 1;
+			break;
+		case 0x00EE: /* ret (return from subroutine) */
+			break;
+		default: unknown_opcode(opcode);
+		}
+		break;
+	}
+	case 0x6000: /* LD Vx, byte (load byte in register x) */
+	{
+		V[x] = kk;
+		break;
+	}
+
+	default: unknown_opcode(opcode);
+	}
+
+	/* timers */
+	if (delay_timer > 0)
+		delay_timer--;
+	if (sound_timer > 0)
+	{
+		chip8_beep();
+		sound_timer--;
+	}
+	PC += 2;
 }

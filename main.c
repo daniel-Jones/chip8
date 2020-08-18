@@ -27,10 +27,17 @@ int handle_sdl_events();
 void handle_key_down(int keycode);
 void handle_key_up(int keycode);
 uint8_t get_chip8_key(int keycode);
+void print_registers();
 
 extern uint32_t video[WIDTH*HEIGHT];
 extern int draw_flag;
 extern uint8_t key[KEY_SIZE];
+extern uint8_t V[REGISTER_COUNT];
+extern uint16_t I;
+extern uint16_t PC;
+extern int8_t SP;
+extern uint8_t delay_timer;
+extern uint8_t sound_timer;
 
 void
 usage(char *program)
@@ -77,8 +84,28 @@ toggle_pixel(int x, int y)
 }
 
 void
+print_registers()
+{
+	puts("REGISTER DUMP");
+	puts("--------------------------");
+	for (int reg = 0; reg < REGISTER_COUNT; reg++)
+	{
+		printf("V[0x%01X] = 0x%02X\n", reg, V[reg]);
+	}
+	printf("PC = 0x%03X\nI = 0x%03X\nSP = 0x%02X\ndelay_timer = 0x%02X\nsound_timer = 0x%02X\n", PC, I, SP, delay_timer, sound_timer);
+	puts("--------------------------");
+}
+
+void
 handle_key_down(int keycode)
 {
+	switch (keycode)
+	{
+	/* detect interpreter debug keys */
+	case SDLK_p: print_registers(); break;
+	default: break;
+	}
+
 	uint8_t k = get_chip8_key(keycode);
 	if (k > 0xF) return; /* unknown key */
 	key[k] = 1;
@@ -154,17 +181,17 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	chip8_init();
+
 	if (!load_rom(argv[1]))
 	{
 		fprintf(stderr, "cannot start interpreter\n");
 		exit(EXIT_FAILURE);
 	}
 
-	chip8_init();
-
 	init_video();
 
-	const int fps = 60;
+	const int fps = 2;
 	const int frame_delay = 1000/fps;
 	uint32_t  frame_start;
 	uint32_t frame_time;
@@ -189,6 +216,7 @@ int main(int argc, char *argv[])
 	chip8_draw_sprite(30, 9, 0xE*5, 0x5);
 	chip8_draw_sprite(35, 9, 0xf*5, 0x5);
 
+	/*
 	chip8_draw_sprite(0, 20, 0x200, 0x6);
 	chip8_draw_sprite(8, 20, 0x200, 0x6);
 	chip8_draw_sprite(16, 20, 0x200, 0x6);
@@ -196,6 +224,7 @@ int main(int argc, char *argv[])
 
 	chip8_draw_sprite(61, 25, 0x200, 0x6);
 	chip8_draw_sprite(50, 30, 0x200, 0x6);
+	*/
 
 	while(!do_quit)
 	{
