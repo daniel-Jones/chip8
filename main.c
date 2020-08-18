@@ -45,7 +45,6 @@ quit()
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-
 }
 
 void
@@ -72,7 +71,7 @@ toggle_pixel(int x, int y)
 	// TODO: clean
 	uint32_t dos = video[WIDTH*y+x];
 	if (dos <= 0)
-		video[WIDTH*y+x] = (255<<16)|(255<<8)|255;
+		video[WIDTH*y+x] = PIXEL_COLOR;
 	else
 		video[WIDTH*y+x] = 0;
 }
@@ -207,7 +206,10 @@ int main(int argc, char *argv[])
 		chip8_cycle();
 
 		if (draw_flag)
+		{
 			update_video();
+			draw_flag = 0;
+		}
 
 		frame_time = SDL_GetTicks() - frame_start;
 		if (frame_delay > frame_time)

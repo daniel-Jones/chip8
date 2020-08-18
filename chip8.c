@@ -3,7 +3,7 @@
 uint16_t opcode;		// 2 byte opcode
 uint8_t key[KEY_SIZE]; 		// hex key input
 uint32_t video[WIDTH*HEIGHT]; 	// video memory TODO: video should be 8 bit not 32
-uint8_t V[16];			// registers - 0x0 to 0xF
+uint8_t V[REGISTER_COUNT];	// registers - 0x0 to 0xF
 uint16_t I;			// special I register, stores addresses
 uint16_t PC;			// program counter
 uint8_t SP;			// stack pointer
@@ -48,7 +48,7 @@ load_rom(char *rom)
 	}
 
 	/* read a maximum of MAX_ROM_SIZE bytes into memory starting after the reserved memory */
-	fread(&memory[0x200], 1, MAX_ROM_SIZE, romfile);
+	fread(&memory[PROGRAM_START], 1, MAX_ROM_SIZE, romfile);
 
 	fclose(romfile);
 	return ret;
@@ -58,13 +58,13 @@ void
 chip8_init()
 {
 	/* clear everything and set sane defaults */
-	memset(key, 0, sizeof(uint8_t) * 15);
+	memset(key, 0, sizeof(uint8_t) * KEY_SIZE);
 	memset(video, 0, (WIDTH*HEIGHT) * sizeof(uint32_t));
-	memset(V, 0, sizeof(uint8_t) * 16);
+	memset(V, 0, sizeof(uint8_t) * REGISTER_COUNT);
 	memset(stack, 0, (STACK_SIZE) * sizeof(uint16_t));
 	memset(memory, 0, sizeof(uint8_t) * MEMORY_SIZE);
 
-	PC = 0x200; 		// set program counter to where roms are stored
+	PC = PROGRAM_START; 	// set program counter to where roms are stored
 	opcode = 0;
 	I = 0;
 	SP = 0;
@@ -75,16 +75,16 @@ chip8_init()
 
 	/* load font into memory at 0x00: we have 0x00 to 0x1FF free for anything we want */
 	//TODO: add whole alphabet, then can write a rom to write strings or something
-	for (uint8_t i = 0; i < 80; i++)
+	for (uint8_t i = 0; i < FONT_BYTE_SIZE; i++)
 	{
-		memory[0x0 + i] = chip8_fontset[i];
+		memory[ + i] = chip8_fontset[i];
 	}
 
 	uint8_t sinv[] = {0xBA, 0x7C, 0xD6, 0xFE, 0x54, 0xAA};
 	// temp
-	for (uint8_t i = 0; i < 6; i++)
+	for (uint8_t i = 0; i <= FONT_WIDTH; i++)
 	{
-		memory[0x200+i] = sinv[i];
+		memory[PROGRAM_START+i] = sinv[i];
 	}
 }
 
@@ -103,7 +103,7 @@ chip8_draw_sprite(int startx, int starty, uint16_t mem, uint8_t size)
 		/* loop through each byte from mem to mem+size */
 		byte = memory[mem+byteoffset];
 		int bit = 0;
-		for (mask = 0x80; mask != 0; mask >>= 1)
+		for (mask = BYTE_MASK; mask != 0; mask >>= 1)
 		{
 			if (byte & mask)
 			{
@@ -113,7 +113,7 @@ chip8_draw_sprite(int startx, int starty, uint16_t mem, uint8_t size)
 					/* if the video bit is already set, we need to set the collision register */
 					V[0xF] = 1;
 				}
-				video[pixel] ^= 0xFFFFFF;
+				video[pixel] ^= PIXEL_COLOR;
 			}
 			bit++;
 		}
