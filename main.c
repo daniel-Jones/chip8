@@ -23,6 +23,7 @@ void update_video();
 void toggle_pixel(int x, int y);
 void quit();
 void usage(char *);
+int handle_sdl_events();
 void handle_key_down(int keycode);
 void handle_key_up(int keycode);
 uint8_t get_chip8_key(int keycode);
@@ -117,6 +118,35 @@ get_chip8_key(int keycode)
 	}
 }
 
+int
+handle_sdl_events()
+{
+	SDL_Event e;
+	while (SDL_PollEvent(&e) != 0)
+	{
+		switch (e.type)
+		{
+		case SDL_QUIT: return 1;
+		case SDL_KEYDOWN:
+		{
+			switch(e.key.keysym.sym)
+			{
+			case SDLK_ESCAPE: return 1;
+			default:
+				handle_key_down(e.key.keysym.sym);
+				break;
+			}
+			break;
+		}
+		case SDL_KEYUP:
+			handle_key_up(e.key.keysym.sym);
+			break;
+		default: break;
+		}
+	}
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -168,39 +198,12 @@ int main(int argc, char *argv[])
 	chip8_draw_sprite(61, 25, 0x200, 0x6);
 	chip8_draw_sprite(50, 30, 0x200, 0x6);
 
-	SDL_Event e;
 	while(!do_quit)
 	{
 		frame_start = SDL_GetTicks();
 
 		// logic
-		while (SDL_PollEvent(&e) != 0)
-		{
-			switch (e.type)
-			{
-				case SDL_QUIT:
-					do_quit = 1;
-					break;
-				case SDL_KEYDOWN:
-				{
-					switch(e.key.keysym.sym)
-					{
-					case SDLK_ESCAPE:
-						do_quit = 1;
-						break;
-					default:
-						handle_key_down(e.key.keysym.sym);
-						break;
-					}
-					break;
-				}
-				case SDL_KEYUP:
-					handle_key_up(e.key.keysym.sym);
-					break;
-				default: break;
-			}
-		}
-
+		do_quit = handle_sdl_events();
 		chip8_cycle();
 
 		if (draw_flag)
