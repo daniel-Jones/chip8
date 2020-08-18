@@ -23,9 +23,13 @@ void update_video();
 void toggle_pixel(int x, int y);
 void quit();
 void usage(char *);
+void handle_key_down(int keycode);
+void handle_key_up(int keycode);
+uint8_t get_chip8_key(int keycode);
 
 extern uint32_t video[WIDTH*HEIGHT];
 extern int draw_flag;
+extern uint8_t key[KEY_SIZE];
 
 void
 usage(char *program)
@@ -55,19 +59,6 @@ init_video()
 void
 update_video()
 {
-	static int count = 0;
-	//printf("frame %d\n", count++);
-	/*
-	for (uint32_t i = 0 ;i < WIDTH*HEIGHT; i++)
-	{
-
-		video[i] = (255<<16)|(255<<8)|255;
-	}
-	video[0] = (255);
-	video[1] = (255<<8);
-	video[2] = (255<<16);
-	*/
-
 	SDL_UpdateTexture(texture, NULL, video, sizeof(video[0])*WIDTH);
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
@@ -83,6 +74,47 @@ toggle_pixel(int x, int y)
 		video[WIDTH*y+x] = (255<<16)|(255<<8)|255;
 	else
 		video[WIDTH*y+x] = 0;
+}
+
+void
+handle_key_down(int keycode)
+{
+	uint8_t k = get_chip8_key(keycode);
+	if (k > 0xF) return; /* unknown key */
+	key[k] = 1;
+}
+
+void
+handle_key_up(int keycode)
+{
+	uint8_t k = get_chip8_key(keycode);
+	if (k > 0xF) return; /* unknown key */
+	key[k] = 0;
+}
+
+uint8_t
+get_chip8_key(int keycode)
+{
+	switch(keycode)
+	{
+	case SDLK_1: return 0x1;
+	case SDLK_2: return 0x2;
+	case SDLK_3: return 0x3;
+	case SDLK_4: return 0xC;
+	case SDLK_q: return 0x4;
+	case SDLK_w: return 0x5;
+	case SDLK_e: return 0x6;
+	case SDLK_r: return 0xD;
+	case SDLK_a: return 0x7;
+	case SDLK_s: return 0x8;
+	case SDLK_d: return 0x9;
+	case SDLK_f: return 0xE;
+	case SDLK_z: return 0xA;
+	case SDLK_x: return 0x0;
+	case SDLK_c: return 0xB;
+	case SDLK_v: return 0xF;
+	default: return 0xFF;
+	}
 }
 
 int main(int argc, char *argv[])
@@ -136,11 +168,41 @@ int main(int argc, char *argv[])
 	chip8_draw_sprite(61, 25, 0x200, 0x6);
 	chip8_draw_sprite(50, 30, 0x200, 0x6);
 
+	SDL_Event e;
 	while(!do_quit)
 	{
 		frame_start = SDL_GetTicks();
 
 		// logic
+		while (SDL_PollEvent(&e) != 0)
+		{
+			switch (e.type)
+			{
+				case SDL_QUIT:
+					do_quit = 1;
+					break;
+				case SDL_KEYDOWN:
+				{
+					switch(e.key.keysym.sym)
+					{
+					case SDLK_ESCAPE:
+						do_quit = 1;
+						break;
+					default:
+						handle_key_down(e.key.keysym.sym);
+						break;
+					}
+					break;
+				}
+				case SDL_KEYUP:
+					handle_key_up(e.key.keysym.sym);
+					break;
+				default: break;
+			}
+		}
+
+		chip8_cycle();
+
 		if (draw_flag)
 			update_video();
 

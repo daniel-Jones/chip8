@@ -120,3 +120,9 @@ chip8_draw_sprite(int startx, int starty, uint16_t mem, uint8_t size)
 		starty++;
 	}
 }
+
+void
+chip8_cycle()
+{
+
+}
