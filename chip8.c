@@ -173,7 +173,7 @@ chip8_cycle()
 			draw_flag = 1;
 			break;
 		case 0x00EE: /* ret (return from subroutine) */
-			// TODO: test, check for out of bounds?
+			stack[SP] = 0x0;
 			PC = stack[--SP];
 			break;
 		default: unknown_opcode(opcode);
@@ -184,9 +184,23 @@ chip8_cycle()
 		PC = nnn;
 		break;
 	case 0x2000: /* CALL addr (call subroutine at addr, increment SP and put current PC on top of stack, set PC to nnn) */
-		// TODO: test, bounds check?
 		stack[SP++] = PC;
 		PC = nnn;
+		break;
+	case 0x3000: /* SE Vx, byte (skip next instruction if Vx = kk) */
+		// TODO: not tested
+		if (V[x] == kk)
+			PC += 2;
+		break;
+	case 0x4000: /* SN Vx, byte (skip next instruction if Vx != kk) */
+		// TODO: not tested
+		if (V[x] != kk)
+			PC += 2;
+		break;
+	case 0x5000: /* SE Vx, Vy (skip next instruction if Vx == Vy) */
+		// TODO: not tested
+		if (V[x] == V[y])
+			PC += 2;
 		break;
 	case 0x6000: /* LD Vx, byte (load byte in register x) */
 	{
@@ -196,9 +210,61 @@ chip8_cycle()
 	case 0x7000: /* ADD Vx, byte (add byte to Vx and store result in Vx) */
 		V[x] = V[x] + kk;
 		break;
-	case 0x8000: /* LD Vx, Vy (load Vy into Vx register) */
-		V[x] = V[y];
-		break;
+	case 0x8000: /* math */
+	{
+		switch (n)
+		{
+		case 0x00: /* LD Vx, Vy (load Vy into Vx register) */
+			// TODO: not tested
+			V[x] = V[y];
+			break;
+		case 0x01: /* OR Vx, Vy (XOR Vx with Vy and store the result in Vx) */
+			// TODO: not tested
+			V[x] |= V[y];
+			break;
+		case 0x02: /* AND Vx, Vy (AND Vx with Vy and store the result in Vx) */
+			// TODO: not tested
+			V[x] &= V[y];
+			break;
+		case 0x03: /* XOR Vx, Vy (XOR Vx with Vy and store the result in Vx) */
+			// TODO: not tested
+			V[x] ^= V[y];
+			break;
+		case 0x04: /* ADD Vx, Vy (add Vx to Vy, store in Vx, if > 255 set V[F] 1, otherwise 0, Vx = lower 4 bits) */
+			// TODO: not tested
+		{
+			V[0xF] = 0;
+			uint16_t res = V[x] + V[y];
+			if (res > 0xFF)
+			{
+				res &= 0xFF;
+				V[0xF] = 1;
+			}
+			V[x] = res;
+			break;
+		}
+		case 0x05: /* SUB Vx, Vy (subtract Vx from Vy, store in Vx, if Vx > Vy set V[F] 1, otherwise 0 */
+			// TODO: not tested
+			V[0xF] = (V[x] > V[y]) ? 1 : 0;
+			V[x] -= V[y];
+			break;
+		case 0x06: /* SHR Vx (if the least significant bit of Vx is 1, V[F] set to 1, otherwise 0, then Vx is divided by 2 */
+			// TODO: not tested
+			V[0xF] = V[x] & 0x01;
+			V[x] >>= 1;
+			break;
+		case 0x07: /* SUBN Vx, Vy (if Vy > Vx then set V[F] 1 otherwise 0, then Vx is subtracted from Vy, result stored in Vx */
+			V[0xF] = (V[y] > V[x]) ? 1 : 0;
+			V[x] = V[y] - V[x];
+			break;
+		case 0x0E: /* SHL Vx (if the most significant bit of Vx is 1, V[F] set to 1, otherwise 0, then Vx is multiplied by 2 */
+			// TODO: not tested
+			V[0xF] = (V[x] >> 7) & 0x01;
+			V[x] <<= 1;
+			break;
+		default: unknown_opcode(opcode);
+		}
+	}
 	default: unknown_opcode(opcode);
 	}
 
