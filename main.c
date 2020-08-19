@@ -10,9 +10,11 @@
  * http://mattmik.com/files/chip8/mastering/chip8.html (lots of info)
  * http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#0.1
  * http://www.emulator101.com/chip-8-sprites.html
+ * https://slack-files.com/T3CH37TNX-F3RKEUKL4-b05ab4930d?nojsmode=1
  */
 
 #define VIDEO_SCALE 5
+#define STEPPING 1 // set to 1 to step manually through program
 
 SDL_Window *window;
 SDL_Renderer *renderer;
@@ -29,6 +31,8 @@ void handle_key_up(int keycode);
 uint8_t get_chip8_key(int keycode);
 void print_registers();
 
+int step_cycle = 0;
+
 extern uint32_t video[WIDTH*HEIGHT];
 extern int draw_flag;
 extern uint8_t key[KEY_SIZE];
@@ -38,6 +42,7 @@ extern uint16_t PC;
 extern int8_t SP;
 extern uint8_t delay_timer;
 extern uint8_t sound_timer;
+extern uint16_t stack[STACK_SIZE];
 
 void
 usage(char *program)
@@ -86,13 +91,21 @@ toggle_pixel(int x, int y)
 void
 print_registers()
 {
-	puts("REGISTER DUMP");
+	puts("DUMP");
 	puts("--------------------------");
 	for (int reg = 0; reg < REGISTER_COUNT; reg++)
 	{
 		printf("V[0x%01X] = 0x%02X\n", reg, V[reg]);
 	}
-	printf("PC = 0x%03X\nI = 0x%03X\nSP = 0x%02X\ndelay_timer = 0x%02X\nsound_timer = 0x%02X\n", PC, I, SP, delay_timer, sound_timer);
+	// minus 2 on PC because we increment PC by 2 at the start of decoding
+	printf("PC = 0x%03X\nI = 0x%03X\nSP = 0x%02X\ndelay_timer = 0x%02X\nsound_timer = 0x%02X\n", PC-2, I, SP, delay_timer, sound_timer);
+	puts("STACK:");
+	for (int i = 0; i < 16; i++)
+	{
+		printf("[%d] = 0x%03X", i, stack[i]);
+		if (i == 7) puts("");
+	}
+	puts("");
 	puts("--------------------------");
 }
 
@@ -103,6 +116,7 @@ handle_key_down(int keycode)
 	{
 	/* detect interpreter debug keys */
 	case SDLK_p: print_registers(); break;
+	case SDLK_PERIOD: step_cycle = 1; break;
 	default: break;
 	}
 
@@ -191,7 +205,7 @@ int main(int argc, char *argv[])
 
 	init_video();
 
-	const int fps = 2;
+	const int fps = 1;
 	const int frame_delay = 1000/fps;
 	uint32_t  frame_start;
 	uint32_t frame_time;
@@ -232,12 +246,30 @@ int main(int argc, char *argv[])
 
 		// logic
 		do_quit = handle_sdl_events();
-		chip8_cycle();
-
-		if (draw_flag)
+		if (STEPPING)
 		{
-			update_video();
-			draw_flag = 0;
+			if (step_cycle == 1)
+			{
+				chip8_cycle();
+
+				if (draw_flag)
+				{
+					update_video();
+					draw_flag = 0;
+				}
+
+				step_cycle = 0;
+			}
+		}
+		else
+		{
+			chip8_cycle();
+
+			if (draw_flag)
+			{
+				update_video();
+				draw_flag = 0;
+			}
 		}
 
 		frame_time = SDL_GetTicks() - frame_start;

@@ -133,7 +133,7 @@ chip8_beep()
 void
 unknown_opcode(uint16_t bad_opcode)
 {
-	fprintf(stderr, "unknown opcode: 0x%02X at 0x%02X\n", bad_opcode, PC);
+	fprintf(stderr, "unknown opcode: 0x%02X at 0x%02X\n", bad_opcode, PC-2); // minus 2 because we increment PC by 2 at the start of decoding
 }
 void
 chip8_cycle()
@@ -145,7 +145,7 @@ chip8_cycle()
 	/*
 	 * the opcode is a 2 byte value, while our memory is 1 byte
 	 * so to get our opcode we need to combine 2 bytes located at PC and PC+1
-	 * we right shift the first byte by 8 (1 byte) to place it in the high byte
+	 * we left shift the first byte by 8 (1 byte) to place it in the high byte
 	 * and we store the second byte in the lower byte
 	 */
 	opcode = (memory[PC] << 8) | memory[PC+1];
@@ -155,7 +155,8 @@ chip8_cycle()
 	uint8_t x = (opcode >> 8) & 0x000F;	// lower 4 bits of the high byte, we discard the low byte by right shifting it out
 	uint8_t y = (opcode >> 4) & 0x000F;	// upper 4 bits of the low byte, so we need to discard the lower 4 bits
 	uint8_t kk = opcode & 0x00FF;		// lowest 8 bits
-
+	printf("parsing at 0x%03X\n", PC);
+	PC += 2; // TODO: remove
 	switch (opcode & 0xF000)
 	{
 	/*
@@ -172,17 +173,32 @@ chip8_cycle()
 			draw_flag = 1;
 			break;
 		case 0x00EE: /* ret (return from subroutine) */
+			// TODO: test, check for out of bounds?
+			PC = stack[--SP];
 			break;
 		default: unknown_opcode(opcode);
 		}
 		break;
 	}
+	case 0x1000: /*JP addr (jump to memory address nnn) */
+		PC = nnn;
+		break;
+	case 0x2000: /* CALL addr (call subroutine at addr, increment SP and put current PC on top of stack, set PC to nnn) */
+		// TODO: test, bounds check?
+		stack[SP++] = PC;
+		PC = nnn;
+		break;
 	case 0x6000: /* LD Vx, byte (load byte in register x) */
 	{
 		V[x] = kk;
 		break;
 	}
-
+	case 0x7000: /* ADD Vx, byte (add byte to Vx and store result in Vx) */
+		V[x] = V[x] + kk;
+		break;
+	case 0x8000: /* LD Vx, Vy (load Vy into Vx register) */
+		V[x] = V[y];
+		break;
 	default: unknown_opcode(opcode);
 	}
 
@@ -194,5 +210,4 @@ chip8_cycle()
 		chip8_beep();
 		sound_timer--;
 	}
-	PC += 2;
 }
