@@ -14,7 +14,7 @@
  */
 
 #define VIDEO_SCALE 5
-#define STEPPING 1 // set to 1 to step manually through program
+#define STEPPING 0 // set to 1 to step manually through program
 
 SDL_Window *window;
 SDL_Renderer *renderer;
@@ -205,13 +205,14 @@ int main(int argc, char *argv[])
 
 	init_video();
 
-	const int fps = 1;
+	const int fps = 500;
 	const int frame_delay = 1000/fps;
 	uint32_t  frame_start;
 	uint32_t frame_time;
 
 	int do_quit = 0;
 
+	/*
 	chip8_draw_sprite(0, 0, 0xD*5, 0x5);
 	chip8_draw_sprite(5, 0, 0xE*5, 0x5);
 	chip8_draw_sprite(10, 0, 0xA*5, 0x5);
@@ -230,7 +231,6 @@ int main(int argc, char *argv[])
 	chip8_draw_sprite(30, 9, 0xE*5, 0x5);
 	chip8_draw_sprite(35, 9, 0xf*5, 0x5);
 
-	/*
 	chip8_draw_sprite(0, 20, 0x200, 0x6);
 	chip8_draw_sprite(8, 20, 0x200, 0x6);
 	chip8_draw_sprite(16, 20, 0x200, 0x6);

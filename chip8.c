@@ -96,10 +96,8 @@ chip8_draw_sprite(int startx, int starty, uint16_t mem, uint8_t size)
 	/*
 	 * draw sprite located at loc of height size at startx,starty
 	 */
-
 	uint8_t byte = 0;
 	uint8_t mask = 0x1;
-	V[0xF] = 0; /* set collision register to 0 */
 	for (uint8_t byteoffset = 0; byteoffset < size; byteoffset++)
 	{
 		/* loop through each byte from mem to mem+size */
@@ -110,12 +108,10 @@ chip8_draw_sprite(int startx, int starty, uint16_t mem, uint8_t size)
 			if (byte & mask)
 			{
 				uint32_t pixel = WIDTH*(starty%HEIGHT)+((startx%WIDTH)+bit);
-				if (video[pixel] != 0)
-				{
-					/* if the video bit is already set, we need to set the collision register */
-					V[0xF] = 1;
-				}
+				/* if the video bit is already set, we need to set the collision register */
+				V[0xF] = (video[pixel] != 0) ? 1 : 0;
 				video[pixel] ^= PIXEL_COLOR;
+				draw_flag = 1;
 			}
 			bit++;
 		}
@@ -155,7 +151,7 @@ chip8_cycle()
 	uint8_t x = (opcode >> 8) & 0x000F;	// lower 4 bits of the high byte, we discard the low byte by right shifting it out
 	uint8_t y = (opcode >> 4) & 0x000F;	// upper 4 bits of the low byte, so we need to discard the lower 4 bits
 	uint8_t kk = opcode & 0x00FF;		// lowest 8 bits
-	printf("parsing at 0x%03X\n", PC);
+	printf("parsing at 0x%03X opcode = 0x%04X\n", PC, opcode);
 	PC += 2; // TODO: remove
 	switch (opcode & 0xF000)
 	{
@@ -189,18 +185,15 @@ chip8_cycle()
 		break;
 	case 0x3000: /* SE Vx, byte (skip next instruction if Vx = kk) */
 		// TODO: not tested
-		if (V[x] == kk)
-			PC += 2;
+		PC += (V[x] == kk) ? 2 : 0;
 		break;
 	case 0x4000: /* SN Vx, byte (skip next instruction if Vx != kk) */
 		// TODO: not tested
-		if (V[x] != kk)
-			PC += 2;
+		PC += (V[x] != kk) ? 2 : 0;
 		break;
 	case 0x5000: /* SE Vx, Vy (skip next instruction if Vx == Vy) */
 		// TODO: not tested
-		if (V[x] == V[y])
-			PC += 2;
+		PC += (V[x] == V[y]) ? 2 : 0;
 		break;
 	case 0x6000: /* LD Vx, byte (load byte in register x) */
 	{
@@ -264,6 +257,117 @@ chip8_cycle()
 			break;
 		default: unknown_opcode(opcode);
 		}
+		break;
+	}
+	case 0x9000: /* SNE Vx, Vy (skip next instruction if Vx != Vy) */
+		// TODO: not tested
+		PC += (V[x] != V[y]) ? 2 : 0;
+		break;
+	case 0xA000: /* LD I, addr (load register I with addr) */
+		// TODO: not tested
+		I = nnn;
+		break;
+	case 0xB000: /* JP V0, addr (set PC to location nnn + V0) */
+		// TODO: not tested
+		PC = V[0] + nnn;
+		break;
+	case 0xC000: /* RND Vx, byte (set Vx to a random byte and AND it by kk) */
+		// TODO: not tested
+		V[x] = (rand() % 256) & kk; // random number between 0 and 255
+		break;
+	case 0xD000: /* DRW Vx, Vy, n (read n bytes from starting starting at address in register I, and draws then at coordinates x,y */
+		// TODO: not tested
+		chip8_draw_sprite(V[x], V[y], I, n);
+		break;
+	case 0xE000: /* key input */
+	{
+		switch(kk)
+		{
+		case 0x9E: /* SKP Vx (skip next instruction if key Vx is pressed) */
+			// TODO: not tested
+			PC += (key[V[x]] == 1) ? 2 : 0;
+			break;
+		case 0xA1: /* SKNP Vx (skip next instruction if key Vx is not pressed) */
+			// TODO: not tested
+			PC += (key[V[x]] == 0) ? 2 : 0;
+			break;
+		default: unknown_opcode(opcode);
+		}
+		break;
+	}
+	case 0xF000:
+	{
+		switch (kk)
+		{
+		case 0x07: /* LD Vx, DT (load Vx with the value of delay timer register) */
+			// TODO: not tested
+			V[x] = delay_timer;
+			break;
+		case 0x0A: /* LD Vx, K (all execution stops until a key is pressed, then that key is put into Vx) */
+		{
+			// TODO: not tested
+			int found_key = 0;
+			for (int i = 0; i < 15; i++)
+			{
+				V[x] = key[i];
+				if (V[x] == 1)
+					found_key = 1;
+			}
+			PC -= (found_key == 0) ? 2 : 0;
+			break;
+		}
+		case 0x15: /* LD DT, Vx (delay timer is set to the value of Vx */
+			// TODO: not tested
+			delay_timer = V[x];
+			break;
+		case 0x18: /* LD ST, Vx (sound timer is set to the value of Vx */
+			// TODO: not tested
+			sound_timer = V[x];
+			break;
+		case 0x1E: /* ADD I, Vx (set I register to I + Vx) */
+			// TODO: not tested
+			I += V[x];
+			break;
+		case 0x29: /* LD F, Vx (set register I to location of the hex sprite Vx) */
+			// TODO: not tested
+			I = V[x] * 5;
+			break;
+		case 0x33: /* LD B, Vx (store BCD representation of Vx in memory locations I, I+1 and I+2) */
+			// TODO: not tested
+			memory[I]  = (V[x] % 1000) / 100;
+			memory[I+1] = (V[x] % 100) / 10;
+			memory[I+2] = (V[x] % 10);
+			break;
+		case 0x55: /* LD [I], Vx (store registers V0 through Vx starting at memory location I) */
+		{
+			// TODO: not tested
+			int reg = 0;
+			do
+			{
+				memory[I+reg] = V[reg];
+				reg++;
+			}
+			while (reg <= V[x]);
+			break;
+		}
+		case 0x65: /* LD Vx, [I] (read registers V0 through Vx from memory starting at I) */
+		{
+			// TODO: not tested
+			int reg = 0;
+			int target = V[x];
+			do
+			{
+				V[reg] = memory[I+reg];
+				reg++;
+			}
+			while (reg < target);
+			break;
+		}
+			break;
+
+		default: unknown_opcode(opcode);
+		}
+		break;
 	}
 	default: unknown_opcode(opcode);
 	}

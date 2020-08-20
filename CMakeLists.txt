@@ -10,7 +10,7 @@ add_executable(
 	chip8
 	main.c chip8.c chip8.h)
 
-target_compile_options(chip8 PRIVATE -Wall)
+target_compile_options(chip8 PRIVATE -Wall -Wextra)
 
 target_link_libraries(chip8 PRIVATE SDL2::SDL2)
 
