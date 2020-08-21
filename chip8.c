@@ -129,7 +129,7 @@ chip8_beep()
 void
 unknown_opcode(uint16_t bad_opcode)
 {
-	fprintf(stderr, "unknown opcode: 0x%02X at 0x%02X\n", bad_opcode, PC-2); // minus 2 because we increment PC by 2 at the start of decoding
+	fprintf(stderr, "unknown opcode: 0x%04X at 0x%02X\n", bad_opcode, PC-2); // minus 2 because we increment PC by 2 at the start of decoding
 }
 void
 chip8_cycle()
@@ -306,14 +306,16 @@ chip8_cycle()
 		case 0x0A: /* LD Vx, K (all execution stops until a key is pressed, then that key is put into Vx) */
 		{
 			// TODO: not tested
-			int found_key = 0;
-			for (int i = 0; i < 15; i++)
+			int found = 0;
+			for (int i = 0; i <= KEY_SIZE; i++)
 			{
-				V[x] = key[i];
-				if (V[x] == 1)
-					found_key = 1;
+				if (key[i])
+				{
+					V[x] = i;
+					found = 1;
+				}
 			}
-			PC -= (found_key == 0) ? 2 : 0;
+			PC -= (found == 0) ? 2 : 0;
 			break;
 		}
 		case 0x15: /* LD DT, Vx (delay timer is set to the value of Vx */
