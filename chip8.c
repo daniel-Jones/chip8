@@ -341,26 +341,19 @@ chip8_cycle()
 		case 0x55: /* LD [I], Vx (store registers V0 through Vx starting at memory location I) */
 		{
 			// TODO: not tested
-			int reg = 0;
-			do
+			for(int i = 0; i <= x; ++i)
 			{
-				memory[I+reg] = V[reg];
-				reg++;
+			    memory[I + i] = V[i];
 			}
-			while (reg <= V[x]);
 			break;
 		}
 		case 0x65: /* LD Vx, [I] (read registers V0 through Vx from memory starting at I) */
 		{
 			// TODO: not tested
-			int reg = 0;
-			int target = V[x];
-			do
+			for(int i = 0; i <= x; ++i)
 			{
-				V[reg] = memory[I+reg];
-				reg++;
+			    V[i] = memory[I + i];
 			}
-			while (reg < target);
 			break;
 		}
 			break;

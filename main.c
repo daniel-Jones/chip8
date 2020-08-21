@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 
 	init_video();
 
-	const int fps = 500;
+	const int fps = 900;
 	const int frame_delay = 1000/fps;
 	uint32_t  frame_start;
 	uint32_t frame_time;
