@@ -94,15 +94,6 @@ chip8_init()
 	{
 		memory[0x0 + i] = chip8_fontset[i];
 	}
-
-	/*
-	uint8_t sinv[] = {0xBA, 0x7C, 0xD6, 0xFE, 0x54, 0xAA};
-	// temp
-	for (uint8_t i = 0; i <= FONT_WIDTH; i++)
-	{
-		memory[PROGRAM_START+i] = sinv[i];
-	}
-	*/
 }
 
 void

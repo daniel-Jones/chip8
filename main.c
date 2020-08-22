@@ -28,7 +28,7 @@
  * https://slack-files.com/T3CH37TNX-F3RKEUKL4-b05ab4930d?nojsmode=1
  */
 
-#define VIDEO_SCALE 5
+//#define VIDEO_SCALE 5
 #define STEPPING 0 // set to 1 to step manually through program
 
 SDL_Window *window;
@@ -46,6 +46,7 @@ void handle_key_up(int keycode);
 uint8_t get_chip8_key(int keycode);
 void print_registers();
 
+int VIDEO_SCALE = 5;
 int step_cycle = 0;
 
 extern uint32_t video[WIDTH*HEIGHT];
@@ -62,7 +63,7 @@ extern uint16_t stack[STACK_SIZE];
 void
 usage(char *program)
 {
-	printf("usage: %s [romfile]\n", program);
+	printf("usage: %s [speed] [scale] [romfile]\nspeed - how many cycles per second should be run (60-1000 or so, depends on the game)\nscale - pixel scaling (~5 recommended)", program);
 }
 
 void
@@ -204,15 +205,17 @@ handle_sdl_events()
 
 int main(int argc, char *argv[])
 {
-	if (argc < 2)
+	if (argc < 4)
 	{
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
+
+	VIDEO_SCALE = atoi(argv[1]);
 	chip8_init();
 
-	if (!load_rom(argv[1]))
+	if (!load_rom(argv[3]))
 	{
 		fprintf(stderr, "cannot start interpreter\n");
 		exit(EXIT_FAILURE);
@@ -220,7 +223,7 @@ int main(int argc, char *argv[])
 
 	init_video();
 
-	const int fps = 300;
+	const int fps = atoi(argv[2]);
 	const int frame_delay = 1000/fps;
 	uint32_t  frame_start;
 	uint32_t frame_time;
