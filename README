@@ -1,1 +1,15 @@
 CHIP-8 interpreter in C using SDL2 for graphics and sound.
+
+# build
+```
+cmake CmakeLists.txt
+make
+```
+The binary is in bin/
+# running
+```
+usage: bin/chip8 [scale] [speed] [romfile]
+scale - pixel scaling (~5 recommended)
+speed - how many cycles per second should be run (60-1000 or so, depends on the game)
+```
+A number of example ROM files are provided in the roms/ directory.

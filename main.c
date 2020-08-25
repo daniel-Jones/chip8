@@ -63,7 +63,7 @@ extern uint16_t stack[STACK_SIZE];
 void
 usage(char *program)
 {
-	printf("usage: %s [speed] [scale] [romfile]\nspeed - how many cycles per second should be run (60-1000 or so, depends on the game)\nscale - pixel scaling (~5 recommended)", program);
+	printf("usage: %s [scale] [speed] [romfile]\nscale - pixel scaling (~5 recommended)\nspeed - how many cycles per second should be run (60-1000 or so, depends on the game)\n", program);
 }
 
 void
@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
 	init_video();
 
 	const int fps = atoi(argv[2]);
-	const int frame_delay = 1000/fps;
+	const uint32_t frame_delay = 1000/fps;
 	uint32_t  frame_start;
 	uint32_t frame_time;
 
