@@ -29,7 +29,6 @@
  */
 
 //#define VIDEO_SCALE 5
-#define STEPPING 0 // set to 1 to step manually through program
 
 SDL_Window *window;
 SDL_Renderer *renderer;
@@ -236,30 +235,13 @@ int main(int argc, char *argv[])
 
 		// logic
 		do_quit = handle_sdl_events();
-		if (STEPPING)
+		chip8_cycle();
+		chip8_timer_cycle();
+
+		if (draw_flag)
 		{
-			if (step_cycle == 1)
-			{
-				chip8_cycle();
-
-				if (draw_flag)
-				{
-					update_video();
-					draw_flag = 0;
-				}
-
-				step_cycle = 0;
-			}
-		}
-		else
-		{
-			chip8_cycle();
-
-			if (draw_flag)
-			{
-				update_video();
-				draw_flag = 0;
-			}
+			update_video();
+			draw_flag = 0;
 		}
 
 		frame_time = SDL_GetTicks() - frame_start;

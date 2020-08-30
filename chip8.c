@@ -129,7 +129,8 @@ void
 chip8_beep()
 {
 	// TODO: holy shit this is terrible, do something better
-	puts("\a");
+	printf("\a");
+	fflush(stdout);
 }
 
 void
@@ -157,7 +158,7 @@ chip8_cycle()
 	uint8_t x = (opcode >> 8) & 0x000F;	// lower 4 bits of the high byte, we discard the low byte by right shifting it out
 	uint8_t y = (opcode >> 4) & 0x000F;	// upper 4 bits of the low byte, so we need to discard the lower 4 bits
 	uint8_t kk = opcode & 0x00FF;		// lowest 8 bits
-	printf("parsing at 0x%03X opcode = 0x%04X\n", PC, opcode);
+	//printf("parsing at 0x%03X opcode = 0x%04X\n", PC, opcode);
 	PC += 2; // TODO: remove
 	switch (opcode & 0xF000)
 	{
@@ -170,7 +171,6 @@ chip8_cycle()
 		switch (kk)
 		{
 		case 0x00E0: /* cls (clear screen) */
-			puts("clear");
 			memset(video, 0, (WIDTH*HEIGHT) * sizeof(uint32_t));
 			draw_flag = 1;
 			break;
@@ -351,7 +351,7 @@ chip8_cycle()
 			// TODO: not tested
 			for(int i = 0; i <= x; ++i)
 			{
-			    memory[I + i] = V[i];
+				memory[I + i] = V[i];
 			}
 			break;
 		}
@@ -360,7 +360,7 @@ chip8_cycle()
 			// TODO: not tested
 			for(int i = 0; i <= x; ++i)
 			{
-			    V[i] = memory[I + i];
+				V[i] = memory[I + i];
 			}
 			break;
 		}
@@ -372,7 +372,10 @@ chip8_cycle()
 	}
 	default: unknown_opcode(opcode);
 	}
+}
 
+void chip8_timer_cycle()
+{
 	/* timers */
 	if (delay_timer > 0)
 		delay_timer--;
