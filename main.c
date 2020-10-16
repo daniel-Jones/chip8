@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <SDL2/SDL.h>
 
 #include "chip8.h"
@@ -28,7 +29,8 @@
  * https://slack-files.com/T3CH37TNX-F3RKEUKL4-b05ab4930d?nojsmode=1
  */
 
-//#define VIDEO_SCALE 5
+#define DEFAULT_VIDEO_SCALE 10
+#define DEFAULT_FPS 500
 
 SDL_Window *window;
 SDL_Renderer *renderer;
@@ -45,8 +47,10 @@ void handle_key_up(int keycode);
 uint8_t get_chip8_key(int keycode);
 void print_registers();
 
-int VIDEO_SCALE = 5;
+int video_scale = DEFAULT_VIDEO_SCALE;
+int fps = DEFAULT_FPS;
 int step_cycle = 0;
+char *rom = NULL;
 
 extern uint32_t video[WIDTH*HEIGHT];
 extern int draw_flag;
@@ -58,12 +62,6 @@ extern int8_t SP;
 extern uint8_t delay_timer;
 extern uint8_t sound_timer;
 extern uint16_t stack[STACK_SIZE];
-
-void
-usage(char *program)
-{
-	printf("usage: %s [scale] [speed] [romfile]\nscale - pixel scaling (~5 recommended)\nspeed - how many cycles per second should be run (60-1000 or so, depends on the game)\n", program);
-}
 
 void
 quit()
@@ -78,7 +76,7 @@ void
 init_video()
 {
 	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow("chip8 interpreter", 0, 0, WIDTH*VIDEO_SCALE, HEIGHT*VIDEO_SCALE, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("chip8 interpreter", 0, 0, WIDTH*video_scale, HEIGHT*video_scale, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
 }
@@ -204,17 +202,32 @@ handle_sdl_events()
 
 int main(int argc, char *argv[])
 {
-	if (argc < 4)
+	char opt;
+	int index;
+
+	while ((opt = getopt(argc, argv, "s:f:")) != -1)
 	{
-		usage(argv[0]);
-		exit(EXIT_FAILURE);
+		switch (opt)
+		{
+		case 's':
+			video_scale = atoi(optarg);
+			break;
+		case 'f':
+			fps = atoi(optarg);
+			break;
+		default: break;
+		}
+	}
+
+	for (index = optind; index < argc; index++)
+	{
+		rom = argv[index];
 	}
 
 
-	VIDEO_SCALE = atoi(argv[1]);
 	chip8_init();
 
-	if (!load_rom(argv[3]))
+	if (!load_rom(rom))
 	{
 		fprintf(stderr, "cannot start interpreter\n");
 		exit(EXIT_FAILURE);
@@ -222,7 +235,6 @@ int main(int argc, char *argv[])
 
 	init_video();
 
-	const int fps = atoi(argv[2]);
 	const uint32_t frame_delay = 1000/fps;
 	uint32_t  frame_start;
 	uint32_t frame_time;
