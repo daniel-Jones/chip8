@@ -52,21 +52,20 @@ uint8_t chip8_fontset[80] =
 int
 load_rom(char *rom)
 {
-	int ret = 1;
 	printf("loading rom %s..\n", rom);
 	FILE *romfile;
 	romfile = fopen(rom, "rb");
 	if (romfile == NULL)
 	{
 		fprintf(stderr, "cannot read rom %s: %s\n", rom, strerror(errno));
-		ret = 0;
+		return 0;
 	}
 
 	/* read a maximum of MAX_ROM_SIZE bytes into memory starting after the reserved memory */
 	fread(&memory[PROGRAM_START], 1, MAX_ROM_SIZE, romfile);
 
 	fclose(romfile);
-	return ret;
+	return 1;
 }
 
 void
